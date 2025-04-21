@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 class ProductDetailPage extends StatefulWidget {
@@ -42,8 +44,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(15),
-                  child: Image.network(
-                    widget.product['image'],
+                  child: Image.file(
+                    File(widget.product['image']),
                     height: 250,
                     width: double.infinity,
                     fit: BoxFit.cover,
