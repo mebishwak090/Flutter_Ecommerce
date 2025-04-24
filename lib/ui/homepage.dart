@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter_ecommerce/ui/splash.dart';
 import 'productDetailPage.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -115,7 +116,9 @@ class _HomePageState extends State<HomePage> {
   }
   Future<void> logMeOut () async{
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    log("im inside logout");
     prefs.remove('access_token');
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Splash()));
   }
 
   Future<void> addToCart(Map<String, dynamic> product) async {
@@ -275,7 +278,7 @@ class _HomePageState extends State<HomePage> {
             ListTile(
               leading: const Icon(Icons.shopping_cart),
               title: const Text("Log Out"),
-              onTap: () => logMeOut,
+              onTap:  logMeOut,
             ),
           ],
         ),

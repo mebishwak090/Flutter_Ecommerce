@@ -9,6 +9,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'integration/googleLogin.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'sellerApp/mainPage.dart';
 
@@ -20,6 +22,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+
+  final AuthService _authService = AuthService();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool isLoading = false;
@@ -64,12 +68,13 @@ class _LoginPageState extends State<LoginPage> {
       if(response.statusCode==200 || response.statusCode == 201){
 
         prefs.setString('access_token', jsonDecode(response.body)['access_token']);
-        prefs.setString('user_data', jsonDecode(response.body));
+        prefs.setString('user_type', _tabTextIndexSelected.toString());
+      //  prefs.setString('user_data', jsonDecode(response.body));
       setState(() {
         isLoading = false;
       });
-      _tabTextIndexSelected==1?  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Mainpage())):
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>MainPage()));
+      _tabTextIndexSelected==1?  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>MainPage())):
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Mainpage()));
     }else{
 
       _passwordController.clear();
@@ -251,7 +256,67 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       child: const Text("Login", style: TextStyle(fontSize: 18, color: Colors.white)),
+                    ),
+                  ),
+                ),
 
+                const SizedBox(height: 40),
+
+                // Divider
+                Row(
+                  children: [
+                    Expanded(child: Divider(color: Colors.grey.shade400)),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: Text("OR"),
+                    ),
+                    Expanded(child: Divider(color: Colors.grey.shade400)),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+                Center(
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      setState(() {
+                        isLoading = true;
+                      });
+
+                      UserCredential? userCredential = await _authService.signInWithGoogle();
+
+                      setState(() {
+                        isLoading = false;
+                      });
+
+                      if (userCredential != null) {
+
+                        if (_tabTextIndexSelected == 1) {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (_) => Mainpage()),
+                          );
+                        } else {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (_) => MainPage()),
+                          );
+                        }
+                      } else {
+                        Fluttertoast.showToast(
+                          msg: "Google Sign-In failed. Please try again.",
+                          toastLength: Toast.LENGTH_SHORT,
+                          backgroundColor: Colors.red,
+                          textColor: Colors.white,
+                        );
+                      }
+                    },
+
+                    icon: Image.asset('assets/google_icon.png', height: 24),
+                    label: const Text("Sign in with Google"),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.grey),
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                     ),
                   ),
                 ),

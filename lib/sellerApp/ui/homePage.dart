@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'addproductPage.dart';
+import 'editProduct.dart';
 
 
 class ProductListPage extends StatefulWidget {
@@ -124,6 +125,26 @@ class _ProductListPageState extends State<ProductListPage> {
                         "user_products",
                         products.map((e) => jsonEncode(e)).toList(),
                       );
+                      loadProducts();
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () async {
+                      products.removeAt(index);
+                      final prefs = await SharedPreferences.getInstance();
+                      prefs.setStringList(
+                        "user_products",
+                        products.map((e) => jsonEncode(e)).toList(),
+
+                      );
+
+                    //  Navigator.push(
+                   //     context,
+                       // MaterialPageRoute(
+                         // builder: (context) => EditProductPage(product: index),
+                       // ),
+                   //   );
                       loadProducts();
                     },
                   ),
