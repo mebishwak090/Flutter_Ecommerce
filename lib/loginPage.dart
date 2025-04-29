@@ -1,17 +1,18 @@
 import 'dart:convert';
 import 'dart:developer';
-import 'mainPage.dart';
+import '/mainPage.dart';
 import '/ui/forgetPassword.dart';
 import '/ui/homepage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_toggle_tab/flutter_toggle_tab.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'integration/googleLogin.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
 import 'sellerApp/mainPage.dart';
 
 class LoginPage extends StatefulWidget {
@@ -28,7 +29,12 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   bool isLoading = false;
   bool _obsecure = true;
+  bool _rememberMe = false;
   int _tabTextIndexSelected = 0;
+  final LocalAuthentication auth = LocalAuthentication();
+  bool _canCheckBiometrics = false;
+  List<BiometricType> _availableBiometrics = [];
+
   List<DataTab> get _listTextTabToggle => [
     DataTab(title: "Buyer"),
     DataTab(title: "Seller"),
@@ -51,7 +57,16 @@ class _LoginPageState extends State<LoginPage> {
     postLogin();
 
   }
-
+  Future<void> _checkBiometrics() async {
+    try {
+      _canCheckBiometrics = await auth.canCheckBiometrics;
+      _availableBiometrics = await auth.getAvailableBiometrics();
+      log("Available Biometrics: $_availableBiometrics");
+    } on PlatformException catch (e) {
+      debugPrint("Biometric error: $e");
+    }
+    setState(() {});
+  }
   Future postLogin() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
@@ -97,167 +112,135 @@ class _LoginPageState extends State<LoginPage> {
     // TODO: implement initState
     super.initState();
 
+    _checkBiometrics();
+
   }
+
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        backgroundColor: const Color(0xfff5f5f5),
         body: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 80),
-          child: SingleChildScrollView(
-            child: isLoading==true?Center(
-              child: SpinKitFadingCircle(
-                color: Color(0xffBF1E2E),
-                size: 50.0,
-              ),
-            ):Column(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+          child: isLoading
+              ? const Center(child: SpinKitFadingCircle(color: Color(0xffBF1E2E), size: 50))
+              : SingleChildScrollView(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   "Welcome",
-                  style: TextStyle(fontSize: 60, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  "To the login screen",
-                  style: TextStyle(fontSize: 20, color: Colors.grey.withOpacity(0.8)),
+                  "Please sign in to continue",
+                  style: TextStyle(fontSize: 18, color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 30),
+
+                // Toggle tab
                 FlutterToggleTab(
                   width: 90,
                   borderRadius: 30,
                   height: 50,
                   selectedIndex: _tabTextIndexSelected,
-                  selectedBackgroundColors: [
-                    const Color(0xffBF1E2E),
-                    const Color(0xffBF1E2E)
-                  ],
-                  selectedTextStyle: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  unSelectedTextStyle: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  unSelectedBackgroundColors: [
-                    Colors.white,
-                    Colors.white,
-                  ],
+                  selectedBackgroundColors: [const Color(0xffBF1E2E)],
+                  selectedTextStyle: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                  unSelectedTextStyle: const TextStyle(color: Colors.black87, fontSize: 14),
+                  unSelectedBackgroundColors: [Colors.white],
                   dataTabs: _listTextTabToggle,
-                  selectedLabelIndex: (index) {
-                    setState(() {
-                      _tabTextIndexSelected = index;
-                    });
-                  },
+                  selectedLabelIndex: (index) => setState(() => _tabTextIndexSelected = index),
                   isScroll: false,
                 ),
 
-                const SizedBox(height: 100),
+                const SizedBox(height: 50),
 
-                TextFormField(
-                    controller: _emailController,
-                    cursorColor: Colors.red,
-                    keyboardType: TextInputType.emailAddress,
-                    style: const TextStyle(
-                      fontFamily: "poppins",
-                      color: Colors.black,
-                    ),
-                    decoration: const InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      labelStyle: TextStyle(fontFamily: "poppins",color: Colors.grey,fontSize: 14),
-                      hintStyle: TextStyle(fontFamily: "poppins",color: Colors.grey,fontSize: 14),
-                      hintText: 'Email of user',
-                      contentPadding: EdgeInsets.symmetric(vertical: 18.0, horizontal: 18.0),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10.0)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xffcbcbcb), width: 1.0),
-                        borderRadius: BorderRadius.all(Radius.circular(50.0)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color:Color(0xffcbcbcb), width: 1.0),
-                        borderRadius: BorderRadius.all(Radius.circular(50.0)),
-                      ),
-                      prefixIcon: Icon(Icons.email),
-                    )
+                // Email
+                _buildInputField(
+                  controller: _emailController,
+                  hintText: 'Email',
+                  icon: Icons.email,
+                  inputType: TextInputType.emailAddress,
                 ),
+
                 const SizedBox(height: 20),
-                TextFormField(
-                  obscureText: _obsecure,
+
+                // Password
+                _buildInputField(
                   controller: _passwordController,
-                  decoration:  InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    labelStyle: TextStyle(color: Colors.grey,fontSize: 14),
-                    hintStyle: TextStyle(color: Colors.grey,fontSize: 14),
-                    hintText: 'Password',
-                    contentPadding: EdgeInsets.symmetric(vertical: 18.0, horizontal: 18.0),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(50.0)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xffcbcbcb), width: 1.0),
-                      borderRadius: BorderRadius.all(Radius.circular(50.0)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color:Color(0xffcbcbcb), width: 1.0),
-                      borderRadius: BorderRadius.all(Radius.circular(50.0)),
-                    ),
-                    prefixIcon: Icon(Icons.key),
-                    suffixIcon: GestureDetector(
-                        onTap: (){
-                          if(_obsecure==true){
-                            setState(() {
-                              _obsecure=false;
-                            });
-                          }else{
-                            setState(() {
-                              _obsecure=true;
-                            });
-                          }
-                        },
-                        child: Icon(_obsecure?Icons.remove_red_eye:Icons.remove_red_eye_outlined)),
-                  ),
-
-                ),
-                const SizedBox(height: 50),
-                Checkbox(value: true, onChanged: (value){
-
-                }),
-                const SizedBox(height: 50),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: GestureDetector(
-                    onTap: (){
-                      Navigator.push(context, MaterialPageRoute(builder: (context)=>ForgetPassword()));
-                    },
-                    child: Text(
-                      "Forget Password",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
+                  hintText: 'Password',
+                  icon: Icons.key,
+                  obscureText: _obsecure,
+                  suffixIcon: IconButton(
+                    icon: Icon(_obsecure ? Icons.visibility : Icons.visibility_off),
+                    onPressed: () => setState(() => _obsecure = !_obsecure),
                   ),
                 ),
-                const SizedBox(height: 50),
-                Center(
-                  child: SizedBox(
-                    height: 50,
-                    width: 150,
-                    child: ElevatedButton(
-                      onPressed: _login,
-                      style: ElevatedButton.styleFrom(
-                        elevation: 0,
-                        backgroundColor: Colors.red,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20.0),
+
+                const SizedBox(height: 20),
+
+                // Remember me and forgot password
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _rememberMe,
+                          onChanged: (value) => setState(() => _rememberMe = value ?? true),
+                        ),
+                        const Text("Remember Me"),
+                      ],
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ForgetPassword())),
+                      child: const Text("Forgot Password?", style: TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 30),
+
+                // Login Button
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: SizedBox(
+                        height: 50,
+                        width: 180,
+                        child: ElevatedButton(
+                          onPressed: _login,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                          ),
+                          child: const Text("Login", style: TextStyle(fontSize: 18, color: Colors.white)),
                         ),
                       ),
-                      child: const Text("Login", style: TextStyle(fontSize: 18, color: Colors.white)),
                     ),
-                  ),
+                    SizedBox(width: 10,),
+                    Expanded(
+                      flex: 1,
+                      child: SizedBox(
+                        height: 50,
+                        // width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _authenticateWithBiometrics,
+                          style: ElevatedButton.styleFrom(
+                            elevation: 0,
+                            backgroundColor: Colors.red,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                          ),
+                          child:  const Icon(Icons.fingerprint,color: Colors.white,),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
 
                 const SizedBox(height: 40),
@@ -275,6 +258,8 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
                 const SizedBox(height: 20),
+
+
                 Center(
                   child: OutlinedButton.icon(
                     onPressed: () async {
@@ -327,4 +312,67 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
+
+
+  Widget _buildInputField({
+  required TextEditingController controller,
+  required String hintText,
+  required IconData icon,
+  bool obscureText = false,
+  TextInputType inputType = TextInputType.text,
+  Widget? suffixIcon,
+}) {
+  return TextFormField(
+    controller: controller,
+    obscureText: obscureText,
+    keyboardType: inputType,
+    style: const TextStyle(fontFamily: "poppins", color: Colors.black),
+    decoration: InputDecoration(
+      filled: true,
+      fillColor: Colors.white,
+      hintText: hintText,
+      prefixIcon: Icon(icon),
+      suffixIcon: suffixIcon,
+      contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(50.0)),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(50.0),
+        borderSide: const BorderSide(color: Color(0xffcbcbcb)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(50.0),
+        borderSide: const BorderSide(color: Color(0xffBF1E2E)),
+      ),
+    ),
+  );
 }
+Future<void> _authenticateWithBiometrics() async {
+    log("Bio Logged in Tried!");
+  try {
+    bool didAuthenticate = await auth.authenticate(
+      localizedReason: 'Please authenticate to login',
+      options: const AuthenticationOptions(
+        biometricOnly: false,
+        stickyAuth: true,
+      ),
+    );
+    if(didAuthenticate){
+      log("logged in");
+    }
+  } on PlatformException catch (e) {
+    if (e.code == 'LockedOut') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Too many failed attempts. Please try again in 30 seconds.",
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      debugPrint(e.toString());
+    }
+    log("Bio Login Exception: " + e.toString());
+  }
+
+}}

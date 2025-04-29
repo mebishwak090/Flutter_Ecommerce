@@ -6,6 +6,7 @@ import '/ui/homepage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
