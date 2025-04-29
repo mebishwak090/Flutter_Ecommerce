@@ -26,12 +26,13 @@ class _SplashState extends State<Splash> {
     SharedPreferences sharedP = await SharedPreferences.getInstance();
     access_token = await sharedP.getString('access_token');
     user_type = await sharedP.getString('user_type');
-    log(access_token.toString());
+    log("Access Token" + access_token.toString());
     log(user_type.toString());
-    if(access_token !='' ){
+    if(access_token.toString().isNotEmpty ){
+      log("Im in");
       is_login = access_token;
-      user_type==1?  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Mainpage())):
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>MainPage()));
+      user_type==1?  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>MainPage())):
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Mainpage()));
     }
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>LoginPage() ));
   }

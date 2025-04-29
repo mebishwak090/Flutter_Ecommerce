@@ -445,14 +445,16 @@ class _HomePageState extends State<HomePage> {
                         onTap: (){
                           _controller.loadVideoById(videoId: videoIds[index]);
                         },
-                        child: Container(
-                          color: Colors.green,
-                          child: Center(
-                            child: Text(
-                              videoIds[index],
-                              style: TextStyle(color: Colors.white, fontSize: 20),
-                            ),
+                        child: Column(
+                          children: [
+                            Expanded(
+                                child: Image.network(
+                                  "https://img.youtube.com/vi/${videoIds[index]}/hqdefault.jpg",
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  ),
                           ),
+                          ]
                         ),
                       ),
                     );
