@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../mainPage.dart';
@@ -7,17 +8,17 @@ import '../sellerApp/mainPage.dart';
 import '/loginPage.dart';
 import '/ui/homepage.dart';
 
-class Splash extends StatefulWidget {
-  const Splash({super.key});
+class Splash1 extends StatefulWidget {
+  const Splash1({super.key});
 
   @override
-  State<Splash> createState() => _SplashState();
+  State<Splash1> createState() => _Splash1State();
 }
 
 
 
 
-class _SplashState extends State<Splash> {
+class _Splash1State extends State<Splash1> {
   String? is_login = '';
   String? access_token = '';
   String? user_type = '';
@@ -28,7 +29,8 @@ class _SplashState extends State<Splash> {
     user_type = await sharedP.getString('user_type');
     log("Access Token" + access_token.toString());
     log(user_type.toString());
-    if(access_token.toString().isNotEmpty ){
+    User? user = FirebaseAuth.instance.currentUser;
+    if(access_token.toString().isNotEmpty || user != null || true){
       log("Im in");
       is_login = access_token;
       user_type==1?  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>MainPage())):
@@ -60,6 +62,57 @@ class _SplashState extends State<Splash> {
             child: CircularProgressIndicator(),
           ),
         ],
+      ),
+    );
+  }
+}
+
+
+class Splash extends StatefulWidget {
+  const Splash({super.key});
+
+  @override
+  State<Splash> createState() => _SplashState();
+}
+
+class _SplashState extends State<Splash> {
+  String token = "";
+
+  void checkAccessToken() async {
+    SharedPreferences userPefs = await SharedPreferences.getInstance();
+    setState(() {
+      token = userPefs.getString("token") ?? "";
+    });
+
+    if (token.isEmpty) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage()),
+      );
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 3), () {
+      setState(() {
+        checkAccessToken();
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.blue,
+        body: Center(child: CircularProgressIndicator(color: Colors.white)),
       ),
     );
   }

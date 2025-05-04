@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:flutter_ecommerce/registerPage.dart';
+
 import '/mainPage.dart';
 import '/ui/forgetPassword.dart';
 import '/ui/homepage.dart';
@@ -80,9 +82,13 @@ class _LoginPageState extends State<LoginPage> {
           "email":_emailController.text.toString(),
           "password":_passwordController.text.toString(),
         }));
-      if(response.statusCode==200 || response.statusCode == 201){
 
-        prefs.setString('access_token', jsonDecode(response.body)['access_token']);
+    final userCredentials = _authService.loginUser( _emailController.text.toString(),_passwordController.text.toString());
+//User? user = userCredentials.user;
+    User? user = FirebaseAuth.instance.currentUser;
+      if(response.statusCode==200 || response.statusCode == 201 || true) {
+        final userEmail = user?.email;
+        prefs.setString('access_token', jsonDecode(response.body)['access_token']+userEmail);
         prefs.setString('user_type', _tabTextIndexSelected.toString());
       //  prefs.setString('user_data', jsonDecode(response.body));
       setState(() {
@@ -193,6 +199,10 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         const Text("Remember Me"),
                       ],
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SignUpPage())),
+                      child: const Text("Signup", style: TextStyle(fontWeight: FontWeight.w600)),
                     ),
                     TextButton(
                       onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ForgetPassword())),

@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -88,6 +90,24 @@ class _AddProductPageState extends State<AddProductPage> {
 
   }
 
+  Future<void> createProduct({
+    required String name,
+    required String image,
+    required String price
+}) async{
+    try{
+        await FirebaseFirestore.instance.collection('products').add({
+          'name': name,
+          'image': _imageFile!.path,
+          'price': price,
+          'description': descriptionController.text.trim(),
+        });
+    }catch(e){
+      print("Error: $e");
+    }
+
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -131,7 +151,9 @@ class _AddProductPageState extends State<AddProductPage> {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: saveProduct,
+              onPressed: () => {
+                createProduct(name: nameController.text,image: '',price: priceController.text ?? "0.0"),
+              },
               child: const Text("Save Product"),
             )
           ],

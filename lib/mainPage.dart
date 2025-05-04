@@ -4,7 +4,6 @@ import 'dart:ui';
 import '/ui/cartPage.dart';
 import '/ui/homepage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -25,29 +24,18 @@ class _MainpageState extends State<Mainpage> {
   @override
   void initState() {
     super.initState();
-
   }
 
-
   List<Widget> _buildScreens() {
-    return [
-      HomePage(),
-      CartPage(),
-      HomePage(),
-      HomePage(),
-    ];
+    return [HomePage(), CartPage(), HomePage(), HomePage()];
   }
 
   void _onTabTapped(int index) {
-
     _pageController.jumpToPage(index);
     setState(() {
       _currentIndex = index;
     });
-
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -88,10 +76,15 @@ class _MainpageState extends State<Mainpage> {
               icon: Icon(Icons.person_outline_rounded),
               label: "Profile",
             ),
+
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline_rounded),
+              label: "Test",
+            ),
           ],
           selectedItemColor: Colors.red,
           unselectedItemColor: Colors.grey,
-          type: BottomNavigationBarType.fixed,
+          type: BottomNavigationBarType.shifting,
         ),
       ),
     );
